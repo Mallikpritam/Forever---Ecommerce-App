@@ -39,7 +39,10 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/collection" element={<Collection />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/placeorder" element={<Placeorder />} />
+
+        {/* ✅ FIXED ROUTE (matches navigate('/place-order')) */}
+        <Route path="/place-order" element={<Placeorder />} />
+
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/product/:productId" element={<Product />} />

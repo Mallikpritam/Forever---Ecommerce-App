@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";   // ✅ FIXED (important)
 import { products } from "../assets/assets";
 import { toast } from "react-toastify";
 
@@ -13,7 +14,9 @@ const ShopContextProvider = (props) => {
   const [showSearch, setShowSearch] = useState(false);
   const [cartItems, setCartItems] = useState({});
 
-  // ADD TO CART
+  const navigate = useNavigate(); // ✅ now works properly
+
+  // ✅ ADD TO CART
   const addToCart = (itemId, size) => {
 
     if (!size) {
@@ -24,13 +27,11 @@ const ShopContextProvider = (props) => {
     let cartData = structuredClone(cartItems);
 
     if (cartData[itemId]) {
-
       if (cartData[itemId][size]) {
         cartData[itemId][size] += 1;
       } else {
         cartData[itemId][size] = 1;
       }
-
     } else {
       cartData[itemId] = {};
       cartData[itemId][size] = 1;
@@ -40,39 +41,41 @@ const ShopContextProvider = (props) => {
     toast.success("Added to Cart");
   };
 
-  // GET CART COUNT
+  // ✅ UPDATE QUANTITY (SAFE)
+  const updateQuantity = (itemId, size, quantity) => {
+
+    let cartData = structuredClone(cartItems);
+
+    if (!cartData[itemId]) return;
+
+    cartData[itemId][size] = quantity;
+
+    // remove item if quantity = 0
+    if (quantity === 0) {
+      delete cartData[itemId][size];
+    }
+
+    setCartItems(cartData);
+  };
+
+  // ✅ GET CART COUNT
   const getCartCount = () => {
 
     let totalCount = 0;
 
     for (const itemId in cartItems) {
       for (const size in cartItems[itemId]) {
-        try {
-          if (cartItems[itemId][size] > 0) {
-            totalCount += cartItems[itemId][size];
-          }
-        } catch (error) {}
+        if (cartItems[itemId][size] > 0) {
+          totalCount += cartItems[itemId][size];
+        }
       }
     }
 
     return totalCount;
   };
 
-  // UPDATE QUANTITY
-  const updateQuantity = async (itemId, size, quantity) => {
-
-    let cartData = structuredClone(cartItems);
-    cartData[itemId][size] = quantity;
-    setCartItems(cartData);
-
-  };
-
-  useEffect(() => {
-    console.log(cartItems);
-  }, [cartItems]);
-
-  // GET CART TOTAL AMOUNT
-  const getCartAmount = async () => {
+  // ✅ GET TOTAL AMOUNT (SAFE)
+  const getCartAmount = () => {
 
     let totalAmount = 0;
 
@@ -80,20 +83,24 @@ const ShopContextProvider = (props) => {
 
       let itemInfo = products.find(product => product._id === itemId);
 
-      for (const size in cartItems[itemId]) {
-        try {
-          if (cartItems[itemId][size] > 0) {
-            totalAmount += cartItems[itemId][size] * itemInfo.price;
-          }
-        } catch (error) {}
-      }
+      if (!itemInfo) continue; // ✅ prevent crash
 
+      for (const size in cartItems[itemId]) {
+        if (cartItems[itemId][size] > 0) {
+          totalAmount += cartItems[itemId][size] * itemInfo.price;
+        }
+      }
     }
 
     return totalAmount;
   };
 
-  // CONTEXT VALUE
+  // ✅ DEBUG (optional)
+  useEffect(() => {
+    console.log("Cart Items:", cartItems);
+  }, [cartItems]);
+
+  // ✅ CONTEXT VALUE
   const value = {
     products,
     currency,
@@ -106,7 +113,8 @@ const ShopContextProvider = (props) => {
     addToCart,
     getCartCount,
     updateQuantity,
-    getCartAmount
+    getCartAmount,
+    navigate,
   };
 
   return (
